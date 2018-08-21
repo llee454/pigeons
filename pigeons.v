@@ -128,9 +128,7 @@ Definition num_things_num_containers
        (* II. case where there is more than one container. *)
        (list_ind
          (fun xs => forall cs, T cs -> T (xs :: cs))
-         (*
-           II.A. case where the first container is empty.
-         *)
+         (* II.A. case where the first container is empty. *)
          (fun cs
            (H  : T cs)
            (H0 : containers_ok (nil :: cs))
