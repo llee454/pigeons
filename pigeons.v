@@ -157,7 +157,7 @@ Definition num_things_num_containers
                   (H  : T cs)
                   (H0 : containers_ok ((x0 :: x1 :: xs) :: cs))
                   => False_ind
-                       (num_things ((x0 :: x1 :: xs) :: cs) <= length ((x0 :: x1 :: xs) :: cs))
+                       (num_things ((x0 :: x1 :: xs) :: cs) <= num_containers ((x0 :: x1 :: xs) :: cs))
                        ((Nat.nle_succ_0 (length xs))
                          (le_S_n (S (length xs)) 0 ((Forall_inv H0) : S (S (length xs)) <= 1)))))).
 
