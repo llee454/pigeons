@@ -36,43 +36,39 @@
 
 Require Import base.
 Require Import List.
-Require Import Lt.
-Require Import Peano.
-Require Import Compare_dec.
-Require Import Nat.
-Require Import PeanoNat.
-Require Import Basics. (* for the composition operator ∘ *)
+Require Import Lt.          (* for le_not_lt *)
+Require Import Compare_dec. (* for le_dec *)
+Require Import PeanoNat.    (* for Nat.nle_succ_0 *)
 
-(* Introduces the composition operator ∘ *)
-Open Scope program_scope.
+(** I. Basic Concepts *) 
 
-(* Represents things (such as pigeons). *)
+(** Represents things (such as pigeons). *)
 Parameter thing : Set.
 
-(* Represents containers (such as cubbies). *)
+(** Represents containers (such as cubbies). *)
 Definition container := list thing.
 
-(* Represents some collection of containers. *)
+(** Represents some collection of containers. *)
 Definition containers := list container.
 
-(* Counts the number of things in a container. *)
+(** Counts the number of things in a container. *)
 Definition container_num_things := length (A := thing).
 
-(* Counts the number of containers. *)
+(** Counts the number of containers. *)
 Definition num_containers := length (A := container).
 
-(* Counts the number of things in some containers. *)
-Definition containers_num_things (cs : containers) : nat
+(** Counts the number of things in some containers. *)
+Definition num_things (cs : containers) : nat
   := fold_right (fun c n => container_num_things c + n) 0 cs.
 
-(*
+(**
   Accepts a container and asserts that it is either
   empty or has only one item in it.
 *)
 Definition container_ok (c : container) : Prop
   := container_num_things c <= 1.
 
-(*
+(**
   This lemma proves that the OK predicate is
   decideable.
 
@@ -84,7 +80,7 @@ Definition container_ok_dec
   :  forall (c : container), {container_ok c}+{~ container_ok c}
   := fun c => le_dec (container_num_things c) 1.
 
-(*
+(**
   Accepts a set of containers and asserts that
   all of the containers are either empty or only
   contain a single item.
@@ -92,7 +88,7 @@ Definition container_ok_dec
 Definition containers_ok (cs : containers) : Prop
   := Forall container_ok cs.
 
-(*
+(**
   This lemma proves that given a list of
   containers that are all OK, the containers in
   the tail of the list are all OK.
@@ -111,7 +107,9 @@ Definition containers_ok_tail
                  => H0 c (or_intror (c0 = c) H) in
           proj2 (Forall_forall container_ok cs) H1.
 
-(*
+(** II. Fundamental Proof *)
+
+(**
   This theorem proves that given a collection
   of containers, where ever container is either
   empty or has one item in it, then the number
@@ -119,11 +117,11 @@ Definition containers_ok_tail
   must be less than or equal to the number
   of containers.
 *)
-Definition containers_num_things_n
+Definition num_things_num_containers
   :  forall cs : containers,
      containers_ok cs ->
-     containers_num_things cs <= num_containers cs
-  := let T cs := containers_ok cs -> containers_num_things cs <= num_containers cs in
+     num_things cs <= num_containers cs
+  := let T cs := containers_ok cs -> num_things cs <= num_containers cs in
      list_ind T
        (* I. case where there are no containers. *)
        (fun _ => le_0_n 0)
@@ -137,12 +135,12 @@ Definition containers_num_things_n
            (H  : T cs)
            (H0 : containers_ok (nil :: cs))
            => let H1
-                :  containers_num_things cs <= num_containers cs
+                :  num_things cs <= num_containers cs
                 := H (containers_ok_tail nil cs H0) in
               (le_S
-                (0 + containers_num_things cs)
+                (0 + num_things cs)
                 (num_containers cs)
-                (H1 || a <= num_containers cs @a by plus_O_n (containers_num_things cs))))
+                (H1 || a <= num_containers cs @a by plus_O_n (num_things cs))))
          (* II.B. case where the first container has one or more things in it. *)
          (fun x0
            => list_ind
@@ -152,20 +150,22 @@ Definition containers_num_things_n
                   (H  : T cs)
                   (H0 : containers_ok ((x0 :: nil) :: cs))
                   => let H1
-                       :  containers_num_things cs <= num_containers cs
+                       :  num_things cs <= num_containers cs
                        := H (containers_ok_tail (x0 :: nil) cs H0) in
-                     le_n_S (containers_num_things cs) (num_containers cs) H1
-                     || a <= S (num_containers cs) @a by Nat.add_1_l (containers_num_things cs))
+                     le_n_S (num_things cs) (num_containers cs) H1
+                     || a <= S (num_containers cs) @a by Nat.add_1_l (num_things cs))
                 (* II.B.2. case where the first container has two or more things in it. *)
                 (fun x1 xs _ _ cs
                   (H  : T cs)
                   (H0 : containers_ok ((x0 :: x1 :: xs) :: cs))
                   => False_ind
-                       (containers_num_things ((x0 :: x1 :: xs) :: cs) <= length ((x0 :: x1 :: xs) :: cs))
+                       (num_things ((x0 :: x1 :: xs) :: cs) <= length ((x0 :: x1 :: xs) :: cs))
                        ((Nat.nle_succ_0 (length xs))
                          (le_S_n (S (length xs)) 0 ((Forall_inv H0) : S (S (length xs)) <= 1)))))).
 
-(*
+(** III. The Pigeonhole Principle *)
+
+(**
   This lemma proves that if we have a collection
   of containers and the number of things in the
   containers is greater than the number of the
@@ -174,18 +174,18 @@ Definition containers_num_things_n
 *)
 Definition lemma_0
   : forall cs : containers,
-    containers_num_things cs > num_containers cs ->
+    num_things cs > num_containers cs ->
     ~ containers_ok cs
   := fun cs
-       (H  : num_containers cs < containers_num_things cs)
+       (H  : num_containers cs < num_things cs)
        (H0 : containers_ok cs)
        => le_not_lt
-            (containers_num_things cs)
+            (num_things cs)
             (num_containers cs)
-            (containers_num_things_n cs H0 : containers_num_things cs <= num_containers cs)
+            (num_things_num_containers cs H0)
             H.
 
-(*
+(**
   This lemma proves that if we have a collection
   of containers and the number of things in the
   containers is greater than the number of
@@ -194,21 +194,21 @@ Definition lemma_0
 *)
 Definition lemma_1
   :  forall cs : containers,
-     containers_num_things cs > num_containers cs ->
+     num_things cs > num_containers cs ->
      Exists (fun c : container => ~ container_num_things c <= 1) cs
-  := fun cs
-       => neg_Forall_Exists_neg container_ok_dec ∘ (lemma_0 cs).
+  := fun cs H
+       => neg_Forall_Exists_neg container_ok_dec (lemma_0 cs H).
 
-(*
+(**
   This theorem proves that if we are given a
   collection of containers and the number of
   things in those containers is greater than the
   number of containers, then one or more of the
   containers has more than one thing in it.
 *)
-Definition conclusion
+Definition pigeonhole_principle
   :  forall cs : containers,
-     containers_num_things cs > num_containers cs ->
+     num_things cs > num_containers cs ->
      Exists (fun c : container => container_num_things c > 1) cs
   := fun cs H
        => let H0
