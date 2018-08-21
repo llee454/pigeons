@@ -111,7 +111,7 @@ Definition containers_ok_tail
 
 (**
   This theorem proves that given a collection
-  of containers, where ever container is either
+  of containers, where every container is either
   empty or has one item in it, then the number
   of items contained in all of the containers
   must be less than or equal to the number
