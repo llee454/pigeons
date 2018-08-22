@@ -88,24 +88,25 @@ Definition container_ok_dec
 Definition containers_ok (cs : containers) : Prop
   := Forall container_ok cs.
 
-(**
-  This lemma proves that given a list of
-  containers that are all OK, the containers in
-  the tail of the list are all OK.
+(*
+  Accepts a predicate, [P], and a list, [x0 ::
+  xs], and proves that if [P] is true for every
+  element in [x0 :: xs], then [P] is true for
+  every element in [xs].
 *)
-Definition containers_ok_tail
-  :  forall (c0 : container) (cs : containers),
-     containers_ok (c0 :: cs) ->
-     containers_ok cs
-  := fun c0 cs (H : containers_ok (c0 :: cs))
+Definition Forall_tail
+  :  forall (A : Type) (P : A -> Prop) (x0 : A) (xs : list A), Forall P (x0 :: xs) -> Forall P xs
+  := fun _ P x0 xs H
        => let H0
-            :  forall c, In c (c0 :: cs) -> container_ok c
-            := proj1 (Forall_forall container_ok (c0 :: cs)) H in
+            :  forall x, In x (x0 :: xs) -> P x
+            := proj1 (Forall_forall P (x0 :: xs)) H in
           let H1
-            :  forall c, In c cs -> container_ok c
-            := fun c (H : In c cs)
-                 => H0 c (or_intror (c0 = c) H) in
-          proj2 (Forall_forall container_ok cs) H1.
+            :  forall x, In x xs -> P x
+            := fun x H2
+                 => H0 x (or_intror (x0 = x) H2) in
+          proj2 (Forall_forall P xs) H1.
+
+Arguments Forall_tail {A} {P} x0 xs.
 
 (** II. Fundamental Proof *)
 
@@ -134,7 +135,7 @@ Definition num_things_num_containers
            (H0 : containers_ok (nil :: cs))
            => let H1
                 :  num_things cs <= num_containers cs
-                := H (containers_ok_tail nil cs H0) in
+                := H (Forall_tail nil cs H0) in
               (le_S
                 (0 + num_things cs)
                 (num_containers cs)
@@ -149,7 +150,7 @@ Definition num_things_num_containers
                   (H0 : containers_ok ((x0 :: nil) :: cs))
                   => let H1
                        :  num_things cs <= num_containers cs
-                       := H (containers_ok_tail (x0 :: nil) cs H0) in
+                       := H (Forall_tail (x0 :: nil) cs H0) in
                      le_n_S (num_things cs) (num_containers cs) H1
                      || a <= S (num_containers cs) @a by Nat.add_1_l (num_things cs))
                 (* II.B.2. case where the first container has two or more things in it. *)
@@ -193,7 +194,7 @@ Definition lemma_0
 Definition lemma_1
   :  forall cs : containers,
      num_things cs > num_containers cs ->
-     Exists (fun c : container => ~ container_num_things c <= 1) cs
+     Exists (fun c : container => ~ container_ok c) cs
   := fun cs H
        => neg_Forall_Exists_neg container_ok_dec (lemma_0 cs H).
 
