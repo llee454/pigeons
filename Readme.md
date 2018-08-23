@@ -18,8 +18,14 @@ module defining a predicate named `occur`.
 
 The proof given by the CoLoR library is not a stand-alone proof
 and depends on several other functions and predicates provided by
-the library. In this library, I present a stand-alone proof that
-relies solely on the Coq Standard Library.
+the library. Accordingly, a developer cannot use this proof without
+including the entire library and familiarizing themselves with the
+definitions and notations defined therein.
+
+In contrast, in this library, I present a stand-alone proof that
+relies solely on the Coq Standard Library. A developer looking for
+a proof of the pigeonhole principle can include this proof directly
+without any additional complications.
 
 Authors
 -------
