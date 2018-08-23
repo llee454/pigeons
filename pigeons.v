@@ -40,7 +40,7 @@ Require Import Lt.          (* for le_not_lt *)
 Require Import Compare_dec. (* for le_dec *)
 Require Import PeanoNat.    (* for Nat.nle_succ_0 *)
 
-(** I. Basic Concepts *) 
+(** * I. Basic Concepts *) 
 
 (** Represents things (such as pigeons). *)
 Parameter thing : Set.
@@ -88,7 +88,9 @@ Definition container_ok_dec
 Definition containers_ok (cs : containers) : Prop
   := Forall container_ok cs.
 
-(*
+(** * II. Auxiliary Theorems *)
+
+(**
   Accepts a predicate, [P], and a list, [x0 ::
   xs], and proves that if [P] is true for every
   element in [x0 :: xs], then [P] is true for
@@ -108,7 +110,39 @@ Definition Forall_tail
 
 Arguments Forall_tail {A} {P} x0 xs.
 
-(** II. Fundamental Proof *)
+(**
+  Accepts two predicates, [P] and [Q], and a
+  list, [xs], and proves that, if [P -> Q],
+  and there exists an element in [xs] for which
+  [P] is true, then there exists an element in
+  [xs] for which [Q] is true.
+*)
+Definition Exists_impl
+  :  forall (A : Type) (P Q : A -> Prop),
+     (forall x : A, P x -> Q x) ->
+     forall xs : list A,
+       Exists P xs ->
+       Exists Q xs
+  := fun _ P Q H xs H0
+       => let H1
+            :  exists x, In x xs /\ P x
+            := proj1 (Exists_exists P xs) H0 in
+          let H2
+            :  exists x, In x xs /\ Q x
+            := ex_ind
+                 (fun x H2
+                   => ex_intro
+                        (fun x => In x xs /\ Q x)
+                        x
+                        (conj
+                          (proj1 H2)
+                          (H x (proj2 H2))))
+                 H1 in
+          (proj2 (Exists_exists Q xs)) H2.
+
+Arguments Exists_impl {A} {P} {Q} H xs H0.
+
+(** * III. Fundamental Proof *)
 
 (**
   This theorem proves that given a collection
@@ -162,7 +196,7 @@ Definition num_things_num_containers
                        ((Nat.nle_succ_0 (length xs))
                          (le_S_n (S (length xs)) 0 ((Forall_inv H0) : S (S (length xs)) <= 1)))))).
 
-(** III. The Pigeonhole Principle *)
+(** * IV. The Pigeonhole Principle *)
 
 (**
   This lemma proves that if we have a collection
@@ -210,18 +244,8 @@ Definition pigeonhole_principle
      num_things cs > num_containers cs ->
      Exists (fun c : container => container_num_things c > 1) cs
   := fun cs H
-       => let H0
-            :  exists c : container, In c cs /\ ~ container_num_things c <= 1
-            := proj1 (Exists_exists (fun c => ~ container_num_things c <= 1) cs) (lemma_1 cs H) in
-          let H1
-            :  exists c : container, In c cs /\ container_num_things c > 1
-            := ex_ind
-                 (fun c H2
-                   => ex_intro
-                        (fun c => In c cs /\ container_num_things c > 1)
-                        c
-                        (conj
-                          (proj1 H2)
-                          (not_le (container_num_things c) 1 (proj2 H2))))
-                 H0 in
-          proj2 (Exists_exists (fun c => container_num_things c > 1) cs) H1.
+       => Exists_impl
+            (fun c (H0 : ~ container_ok c)
+              => not_le (container_num_things c) 1 H0)
+            cs
+            (lemma_1 cs H).
