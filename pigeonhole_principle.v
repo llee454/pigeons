@@ -40,6 +40,8 @@ Require Import Lt.          (* for le_not_lt *)
 Require Import Compare_dec. (* for le_dec *)
 Require Import PeanoNat.    (* for Nat.nle_succ_0 *)
 
+Module Pigeonhole_Principle.
+
 (** * I. Basic Concepts *) 
 
 (** Represents things (such as pigeons). *)
@@ -249,3 +251,5 @@ Definition pigeonhole_principle
               => not_le (container_num_things c) 1 H0)
             cs
             (lemma_1 cs H).
+
+End Pigeonhole_Principle.
