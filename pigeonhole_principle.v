@@ -98,7 +98,7 @@ Definition containers_ok (cs : containers) : Prop
   element in [x0 :: xs], then [P] is true for
   every element in [xs].
 *)
-Definition Forall_tail
+Local Definition Forall_tail
   :  forall (A : Type) (P : A -> Prop) (x0 : A) (xs : list A), Forall P (x0 :: xs) -> Forall P xs
   := fun _ P x0 xs H
        => let H0
@@ -119,7 +119,7 @@ Arguments Forall_tail {A} {P} x0 xs.
   [P] is true, then there exists an element in
   [xs] for which [Q] is true.
 *)
-Definition Exists_impl
+Local Definition Exists_impl
   :  forall (A : Type) (P Q : A -> Prop),
      (forall x : A, P x -> Q x) ->
      forall xs : list A,
