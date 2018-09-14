@@ -1,0 +1,10 @@
+language: coq
+sudo: enabled
+before_install:
+  - sudo apt update -qq
+  - sudo apt install coq -qq
+install:
+  - make 
+script:
+  - coqchk -norec pigeonhole_principle.v
+  - make test
