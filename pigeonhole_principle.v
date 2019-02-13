@@ -90,60 +90,6 @@ Definition container_ok_dec
 Definition containers_ok (cs : containers) : Prop
   := Forall container_ok cs.
 
-(** * II. Auxiliary Theorems *)
-
-(**
-  Accepts a predicate, [P], and a list, [x0 ::
-  xs], and proves that if [P] is true for every
-  element in [x0 :: xs], then [P] is true for
-  every element in [xs].
-*)
-Local Definition Forall_tail
-  :  forall (A : Type) (P : A -> Prop) (x0 : A) (xs : list A), Forall P (x0 :: xs) -> Forall P xs
-  := fun _ P x0 xs H
-       => let H0
-            :  forall x, In x (x0 :: xs) -> P x
-            := proj1 (Forall_forall P (x0 :: xs)) H in
-          let H1
-            :  forall x, In x xs -> P x
-            := fun x H2
-                 => H0 x (or_intror (x0 = x) H2) in
-          proj2 (Forall_forall P xs) H1.
-
-Arguments Forall_tail {A} {P} x0 xs.
-
-(**
-  Accepts two predicates, [P] and [Q], and a
-  list, [xs], and proves that, if [P -> Q],
-  and there exists an element in [xs] for which
-  [P] is true, then there exists an element in
-  [xs] for which [Q] is true.
-*)
-Local Definition Exists_impl
-  :  forall (A : Type) (P Q : A -> Prop),
-     (forall x : A, P x -> Q x) ->
-     forall xs : list A,
-       Exists P xs ->
-       Exists Q xs
-  := fun _ P Q H xs H0
-       => let H1
-            :  exists x, In x xs /\ P x
-            := proj1 (Exists_exists P xs) H0 in
-          let H2
-            :  exists x, In x xs /\ Q x
-            := ex_ind
-                 (fun x H2
-                   => ex_intro
-                        (fun x => In x xs /\ Q x)
-                        x
-                        (conj
-                          (proj1 H2)
-                          (H x (proj2 H2))))
-                 H1 in
-          (proj2 (Exists_exists Q xs)) H2.
-
-Arguments Exists_impl {A} {P} {Q} H xs H0.
-
 (** * III. Fundamental Proof *)
 
 (**
@@ -154,49 +100,50 @@ Arguments Exists_impl {A} {P} {Q} H xs H0.
   must be less than or equal to the number
   of containers.
 *)
-Definition num_things_num_containers
+Theorem num_things_num_containers
   :  forall cs : containers,
      containers_ok cs ->
-     num_things cs <= num_containers cs
-  := let T cs := containers_ok cs -> num_things cs <= num_containers cs in
-     list_ind T
-       (* I. case where there are no containers. *)
-       (fun _ => le_0_n 0)
-       (* II. case where there is more than one container. *)
-       (list_ind
-         (fun xs => forall cs, T cs -> T (xs :: cs))
-         (* II.A. case where the first container is empty. *)
-         (fun cs
-           (H  : T cs)
-           (H0 : containers_ok (nil :: cs))
-           => let H1
-                :  num_things cs <= num_containers cs
-                := H (Forall_tail nil cs H0) in
-              (le_S
-                (0 + num_things cs)
-                (num_containers cs)
-                (H1 || a <= num_containers cs @a by plus_O_n (num_things cs))))
-         (* II.B. case where the first container has one or more things in it. *)
-         (fun x0
-           => list_ind
-                (fun xs => _ -> forall cs, T cs -> T ((x0 :: xs) :: cs))
-                (* II.B.1. case where the first container has only one thing in it. *)
-                (fun _ cs
-                  (H  : T cs)
-                  (H0 : containers_ok ((x0 :: nil) :: cs))
-                  => let H1
-                       :  num_things cs <= num_containers cs
-                       := H (Forall_tail (x0 :: nil) cs H0) in
-                     le_n_S (num_things cs) (num_containers cs) H1
-                     || a <= S (num_containers cs) @a by Nat.add_1_l (num_things cs))
-                (* II.B.2. case where the first container has two or more things in it. *)
-                (fun x1 xs _ _ cs
-                  (H  : T cs)
-                  (H0 : containers_ok ((x0 :: x1 :: xs) :: cs))
-                  => False_ind
-                       (num_things ((x0 :: x1 :: xs) :: cs) <= num_containers ((x0 :: x1 :: xs) :: cs))
-                       ((Nat.nle_succ_0 (length xs))
-                         (le_S_n (S (length xs)) 0 ((Forall_inv H0) : S (S (length xs)) <= 1)))))).
+     num_things cs <= num_containers cs.
+Proof
+  let T cs := containers_ok cs -> num_things cs <= num_containers cs in
+  list_ind T
+    (* I. case where there are no containers. *)
+    (fun _ => le_0_n 0)
+    (* II. case where there is more than one container. *)
+    (list_ind
+      (fun xs => forall cs, T cs -> T (xs :: cs))
+      (* II.A. case where the first container is empty. *)
+      (fun cs
+        (H  : T cs)
+        (H0 : containers_ok (nil :: cs))
+        => let H1
+             :  num_things cs <= num_containers cs
+             := H (Forall_tail nil cs H0) in
+           (le_S
+             (0 + num_things cs)
+             (num_containers cs)
+             (H1 || a <= num_containers cs @a by plus_O_n (num_things cs))))
+      (* II.B. case where the first container has one or more things in it. *)
+      (fun x0
+        => list_ind
+             (fun xs => _ -> forall cs, T cs -> T ((x0 :: xs) :: cs))
+             (* II.B.1. case where the first container has only one thing in it. *)
+             (fun _ cs
+               (H  : T cs)
+               (H0 : containers_ok ((x0 :: nil) :: cs))
+               => let H1
+                    :  num_things cs <= num_containers cs
+                    := H (Forall_tail (x0 :: nil) cs H0) in
+                  le_n_S (num_things cs) (num_containers cs) H1
+                  || a <= S (num_containers cs) @a by Nat.add_1_l (num_things cs))
+             (* II.B.2. case where the first container has two or more things in it. *)
+             (fun x1 xs _ _ cs
+               (H  : T cs)
+               (H0 : containers_ok ((x0 :: x1 :: xs) :: cs))
+               => False_ind
+                    (num_things ((x0 :: x1 :: xs) :: cs) <= num_containers ((x0 :: x1 :: xs) :: cs))
+                    ((Nat.nle_succ_0 (length xs))
+                      (le_S_n (S (length xs)) 0 ((Forall_inv H0) : S (S (length xs)) <= 1)))))).
 
 (** * IV. The Pigeonhole Principle *)
 
@@ -207,11 +154,11 @@ Definition num_things_num_containers
   containers then not all of the containers can
   be empty or have only one thing in it.
 *)
-Definition lemma_0
+Lemma lemma_0
   : forall cs : containers,
     num_things cs > num_containers cs ->
-    ~ containers_ok cs
-  := fun cs
+    ~ containers_ok cs.
+Proof fun cs
        (H  : num_containers cs < num_things cs)
        (H0 : containers_ok cs)
        => le_not_lt
@@ -227,11 +174,11 @@ Definition lemma_0
   containers, then one of the containers cannot
   be empty or have only one item in it.
 *)
-Definition lemma_1
+Lemma lemma_1
   :  forall cs : containers,
      num_things cs > num_containers cs ->
-     Exists (fun c : container => ~ container_ok c) cs
-  := fun cs H
+     Exists (fun c : container => ~ container_ok c) cs.
+Proof fun cs H
        => neg_Forall_Exists_neg container_ok_dec (lemma_0 cs H).
 
 (**
@@ -241,11 +188,11 @@ Definition lemma_1
   number of containers, then one or more of the
   containers has more than one thing in it.
 *)
-Definition pigeonhole_principle
+Theorem pigeonhole_principle
   :  forall cs : containers,
      num_things cs > num_containers cs ->
-     Exists (fun c : container => container_num_things c > 1) cs
-  := fun cs H
+     Exists (fun c : container => container_num_things c > 1) cs.
+Proof fun cs H
        => Exists_impl
             (fun c (H0 : ~ container_ok c)
               => not_le (container_num_things c) 1 H0)
