@@ -90,7 +90,7 @@ Definition container_ok_dec
 Definition containers_ok (cs : containers) : Prop
   := Forall container_ok cs.
 
-(** * III. Fundamental Proof *)
+(** * II. Fundamental Proof *)
 
 (**
   This theorem proves that given a collection
@@ -145,7 +145,7 @@ Proof
                     ((Nat.nle_succ_0 (length xs))
                       (le_S_n (S (length xs)) 0 ((Forall_inv H0) : S (S (length xs)) <= 1)))))).
 
-(** * IV. The Pigeonhole Principle *)
+(** * III. The Pigeonhole Principle *)
 
 (**
   This lemma proves that if we have a collection
